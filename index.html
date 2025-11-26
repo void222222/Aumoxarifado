@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Almoxarifado</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+        
+        .login-options {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .login-btn {
+            padding: 20px 40px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            min-width: 200px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        
+        .login-btn.producao {
+            background-color: var(--success-color);
+        }
+        
+        .login-btn.adm {
+            background-color: var(--warning-color);
+        }
+        
+        .mode-content {
+            display: none;
+        }
+        
+        .mode-content.active {
+            display: block;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Estilo para a tela de produção (tablet) */
+        #producao {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* Estilo para a tela de ADM (PC) */
+        #adm {
+            width: 100%;
+        }
+        
+        .adm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .filtros {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filtro-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-pendente {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .status-aprovado {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .status-entregue {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .status-rejeitado {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #adm table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .filtros {
+                flex-direction: column;
+            }
+            
+            .login-options {
+                flex-direction: column;
+            }
+        }
+        
+        /* Estilo específico para tablet (produção) */
+        @media (max-width: 1024px) and (min-width: 768px) {
+            #producao {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            button {
+                padding: 15px;
+                font-size: 18px;
+            }
+        }
+        
+        /* Estilo específico para PC (adm) */
+        @media (min-width: 1025px) {
+            #adm {
+                padding: 20px 40px;
+            }
+            
+            table {
+                font-size: 16px;
+            }
+        }
+        
+        .solicitacao-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Login/Seleção -->
+    <div id="login" class="mode-content active">
+        <div class="container">
+            <header>
+                <h1>Sistema de Almoxarifado</h1>
+                <p>Selecione o modo de acesso</p>
+            </header>
+            
+            <div class="login-screen">
+                <h2>Bem-vindo ao Sistema de Almoxarifado</h2>
+                <p>Escolha o modo de acesso de acordo com sua função</p>
+                
+                <div class="login-options">
+                    <button class="login-btn producao" data-mode="producao">
+                        <h3>Produção</h3>
+                        <p>Acesso para solicitar materiais</p>
+                        <small>Otimizado para tablet</small>
+                    </button>
+                    
+                    <button class="login-btn adm" data-mode="adm">
+                        <h3>Administração</h3>
+                        <p>Acesso para gerenciar solicitações</p>
+                        <small>Otimizado para PC</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tela de Produção (para tablet) -->
+    <div id="producao" class="mode-content">
+        <div class="container">
+            <header>
+                <h1>Almoxarifado - Produção</h1>
+                <p>Solicitação de Materiais</p>
+            </header>
+            
+            <button class="logout-btn">Sair</button>
+            
+            <div class="card">
+                <h2>Solicitar Material</h2>
+                <form id="solicitacaoForm">
+                    <div class="form-group">
+                        <label for="nomeItem">Nome do Item:</label>
+                        <input type="text" id="nomeItem" required placeholder="Digite o nome do item">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quantidade">Quantidade:</label>
+                        <input type="number" id="quantidade" min="1" required placeholder="Quantidade desejada">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dataHora">Data e Hora:</label>
+                        <input type="datetime-local" id="dataHora" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observacoes">Observações:</label>
+                        <textarea id="observacoes" rows="3" placeholder="Observações adicionais (opcional)"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-success">Enviar Solicitação</button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h2>Minhas Solicitações Recentes</h2>
+                <div id="listaSolicitacoesProducao"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tela de Administração (para PC) -->
+    <div id="adm" class="mode-content">
+        <div class="container">
+            <header>
+                <h1>Almoxarifado - Administração</h1>
+                <p>Gestão de Solicitações de Materiais</p>
+            </header>
+            
+            <button class="logout-btn">Sair</button>
+            
+            <div class="card">
+                <div class="adm-header">
+                    <h2>Painel de Administração</h2>
+                    <div>
+                        <button id="exportarBtn" class="btn-success">Exportar Dados</button>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Solicitações</div>
+                        <div class="stat-value" id="totalSolicitacoes">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pendentes</div>
+                        <div class="stat-value" id="solicitacoesPendentes">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Aprovadas</div>
+                        <div class="stat-value" id="solicitacoesAprovadas">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Entregues</div>
+                        <div class="stat-value" id="solicitacoesEntregues">0</div>
+                    </div>
+                </div>
+                
+                <div class="filtros">
+                    <div class="filtro-item">
+                        <label for="filtroItem">Filtrar por item:</label>
+                        <input type="text" id="filtroItem" placeholder="Digite o nome do item...">
+                    </div>
+                    
+                    <div class="filtro-item">
+                        <label for="filtroStatus">Filtrar por status:</label>
+                        <select id="filtroStatus">
+                            <option value="">Todos os status</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Aprovado">Aprovado</option>
+                            <option value="Entregue">Entregue</option>
+                            <option value="Rejeitado">Rejeitado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filtro-item">
+                        <label for="filtroData">Filtrar por data:</label>
+                        <input type="date" id="filtroData">
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Item</th>
+                            <th>Quantidade</th>
+                            <th>Data/Hora</th>
+                            <th>Observações</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaSolicitacoes">
+                        <!-- As solicitações serão carregadas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Classe para gerenciar as solicitações
+        class GerenciadorSolicitacoes {
+            constructor() {
+                this.solicitacoes = this.carregarSolicitacoes();
+                this.proximoId = this.calcularProximoId();
+            }
+            
+            // Carrega as solicitações do localStorage
+            carregarSolicitacoes() {
+                const solicitacoesSalvas = localStorage.getItem('solicitacoesAlmoxarifado');
+                return solicitacoesSalvas ? JSON.parse(solicitacoesSalvas) : [];
+            }
+            
+            // Salva as solicitações no localStorage
+            salvarSolicitacoes() {
+                localStorage.setItem('solicitacoesAlmoxarifado', JSON.stringify(this.solicitacoes));
+            }
+            
+            // Calcula o próximo ID baseado nas solicitações existentes
+            calcularProximoId() {
+                if (this.solicitacoes.length === 0) return 1;
+                return Math.max(...this.solicitacoes.map(s => s.id)) + 1;
+            }
+            
+            // Adiciona uma nova solicitação
+            adicionarSolicitacao(item, quantidade, dataHora, observacoes) {
+                const novaSolicitacao = {
+                    id: this.proximoId++,
+                    item: item,
+                    quantidade: quantidade,
+                    dataHora: dataHora,
+                    observacoes: observacoes,
+                    status: 'Pendente',
+                    dataCriacao: new Date().toISOString()
+                };
+                
+                this.solicitacoes.push(novaSolicitacao);
+                this.salvarSolicitacoes();
+                return novaSolicitacao;
+            }
+            
+            // Atualiza o status de uma solicitação
+            atualizarStatus(id, novoStatus) {
+                const solicitacao = this.solicitacoes.find(s => s.id === id);
+                if (solicitacao) {
+                    solicitacao.status = novoStatus;
+                    this.salvarSolicitacoes();
+                    return true;
+                }
+                return false;
+            }
+            
+            // Remove uma solicitação
+            removerSolicitacao(id) {
+                const index = this.solicitacoes.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    this.solicitacoes.splice(index, 1);
+                    this.salvarSolicitacoes();
+                    return true;
+                }
+                return false;
+            }
+            
+            // Filtra solicitações
+            filtrarSolicitacoes(filtroItem, filtroStatus, filtroData) {
+                let resultado = this.solicitacoes;
+                
+                if (filtroItem) {
+                    resultado = resultado.filter(s => 
+                        s.item.toLowerCase().includes(filtroItem.toLowerCase())
+                    );
+                }
+                
+                if (filtroStatus) {
+                    resultado = resultado.filter(s => s.status === filtroStatus);
+                }
+                
+                if (filtroData) {
+                    resultado = resultado.filter(s => 
+                        s.dataHora.startsWith(filtroData)
+                    );
+                }
+                
+                return resultado;
+            }
+            
+            // Obtém as últimas solicitações (para a tela de produção)
+            obterUltimasSolicitacoes(limite = 5) {
+                return [...this.solicitacoes]
+                    .sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao))
+                    .slice(0, limite);
+            }
+            
+            // Obtém estatísticas
+            obterEstatisticas() {
+                const total = this.solicitacoes.length;
+                const pendentes = this.solicitacoes.filter(s => s.status === 'Pendente').length;
+                const aprovadas = this.solicitacoes.filter(s => s.status === 'Aprovado').length;
+                const entregues = this.solicitacoes.filter(s => s.status === 'Entregue').length;
+                
+                return {
+                    total,
+                    pendentes,
+                    aprovadas,
+                    entregues
+                };
+            }
+            
+            // Exporta dados para CSV
+            exportarParaCSV() {
+                if (this.solicitacoes.length === 0) {
+                    alert('Não há dados para exportar.');
+                    return;
+                }
+                
+                const cabecalhos = ['ID', 'Item', 'Quantidade', 'Data/Hora', 'Observações', 'Status', 'Data de Criação'];
+                const linhas = this.solicitacoes.map(s => [
+                    s.id,
+                    s.item,
+                    s.quantidade,
+                    s.dataHora,
+                    s.observacoes || '',
+                    s.status,
+                    s.dataCriacao
+                ]);
+                
+                const conteudoCSV = [cabecalhos, ...linhas]
+                    .map(row => row.map(cell => `"${cell}"`).join(','))
+                    .join('\n');
+                
+                const blob = new Blob([conteudoCSV], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `solicitacoes_almoxarifado_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // Instância do gerenciador
+        const gerenciador = new GerenciadorSolicitacoes();
+
+        // Elementos DOM
+        const loginScreen = document.getElementById('login');
+        const modoProducao = document.getElementById('producao');
+        const modoAdm = document.getElementById('adm');
+        const botoesLogin = document.querySelectorAll('.login-btn');
+        const botoesLogout = document.querySelectorAll('.logout-btn');
+        const formularioSolicitacao = document.getElementById('solicitacaoForm');
+        const listaSolicitacoesProducao = document.getElementById('listaSolicitacoesProducao');
+        const tabelaSolicitacoes = document.getElementById('tabelaSolicitacoes');
+        const filtroItem = document.getElementById('filtroItem');
+        const filtroStatus = document.getElementById('filtroStatus');
+        const filtroData = document.getElementById('filtroData');
+        const exportarBtn = document.getElementById('exportarBtn');
+        const totalSolicitacoes = document.getElementById('totalSolicitacoes');
+        const solicitacoesPendentes = document.getElementById('solicitacoesPendentes');
+        const solicitacoesAprovadas = document.getElementById('solicitacoesAprovadas');
+        const solicitacoesEntregues = document.getElementById('solicitacoesEntregues');
+
+        // Navegação entre telas
+        botoesLogin.forEach(botao => {
+            botao.addEventListener('click', () => {
+                const modo = botao.getAttribute('data-mode');
+                
+                // Esconder tela de login
+                loginScreen.classList.remove('active');
+                
+                // Mostrar tela selecionada
+                if (modo === 'producao') {
+                    modoProducao.classList.add('active');
+                    atualizarListaProducao();
+                } else {
+                    modoAdm.classList.add('active');
+                    atualizarTabelaAdm();
+                    atualizarEstatisticas();
+                }
+            });
+        });
+
+        // Botões de logout
+        botoesLogout.forEach(botao => {
+            botao.addEventListener('click', () => {
+                // Voltar para tela de login
+                modoProducao.classList.remove('active');
+                modoAdm.classList.remove('active');
+                loginScreen.classList.add('active');
+            });
+        });
+
+        // Enviar nova solicitação
+        formularioSolicitacao.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const nomeItem = document.getElementById('nomeItem').value;
+            const quantidade = document.getElementById('quantidade').value;
+            const dataHora = document.getElementById('dataHora').value;
+            const observacoes = document.getElementById('observacoes').value;
+            
+            if (nomeItem && quantidade && dataHora) {
+                gerenciador.adicionarSolicitacao(nomeItem, quantidade, dataHora, observacoes);
+                
+                // Limpar formulário
+                formularioSolicitacao.reset();
+                
+                // Atualizar data/hora para o momento atual
+                document.getElementById('dataHora').value = new Date().toISOString().slice(0, 16);
+                
+                // Atualizar lista
+                atualizarListaProducao();
+                
+                alert('Solicitação enviada com sucesso!');
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+            }
+        });
+
+        // Filtros na tela de ADM
+        filtroItem.addEventListener('input', atualizarTabelaAdm);
+        filtroStatus.addEventListener('change', atualizarTabelaAdm);
+        filtroData.addEventListener('change', atualizarTabelaAdm);
+
+        // Exportar dados
+        exportarBtn.addEventListener('click', () => {
+            gerenciador.exportarParaCSV();
+        });
+
+        // Atualizar lista de solicitações na tela de produção
+        function atualizarListaProducao() {
+            const solicitacoes = gerenciador.obterUltimasSolicitacoes();
+            
+            if (solicitacoes.length === 0) {
+                listaSolicitacoesProducao.innerHTML = '<p>Nenhuma solicitação encontrada.</p>';
+                return;
+            }
+            
+            listaSolicitacoesProducao.innerHTML = solicitacoes.map(s => `
+                <div class="solicitacao-item">
+                    <p><strong>Item:</strong> ${s.item}</p>
+                    <p><strong>Quantidade:</strong> ${s.quantidade}</p>
+                    <p><strong>Data/Hora:</strong> ${formatarDataHora(s.dataHora)}</p>
+                    <p><strong>Status:</strong> <span class="status-${s.status.toLowerCase()}">${s.status}</span></p>
+                    ${s.observacoes ? `<p><strong>Observações:</strong> ${s.observacoes}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Atualizar tabela de solicitações na tela de ADM
+        function atualizarTabelaAdm() {
+            const termoItem = filtroItem.value;
+            const statusSelecionado = filtroStatus.value;
+            const dataSelecionada = filtroData.value;
+            
+            const solicitacoes = gerenciador.filtrarSolicitacoes(termoItem, statusSelecionado, dataSelecionada);
+            
+            if (solicitacoes.length === 0) {
+                tabelaSolicitacoes.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nenhuma solicitação encontrada.</td></tr>';
+                return;
+            }
+            
+            tabelaSolicitacoes.innerHTML = solicitacoes.map(s => `
+                <tr>
+                    <td>${s.id}</td>
+                    <td>${s.item}</td>
+                    <td>${s.quantidade}</td>
+                    <td>${formatarDataHora(s.dataHora)}</td>
+                    <td>${s.observacoes || '-'}</td>
+                    <td>
+                        <span class="status-${s.status.toLowerCase()}">${s.status}</span>
+                    </td>
+                    <td class="actions">
+                        <select onchange="atualizarStatusSolicitacao(${s.id}, this.value)" style="padding: 5px; border-radius: 3px; margin-bottom: 5px;">
+                            <option value="Pendente" ${s.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                            <option value="Aprovado" ${s.status === 'Aprovado' ? 'selected' : ''}>Aprovado</option>
+                            <option value="Entregue" ${s.status === 'Entregue' ? 'selected' : ''}>Entregue</option>
+                            <option value="Rejeitado" ${s.status === 'Rejeitado' ? 'selected' : ''}>Rejeitado</option>
+                        </select>
+                        <button class="action-btn btn-danger" onclick="removerSolicitacao(${s.id})">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Atualizar estatísticas
+        function atualizarEstatisticas() {
+            const estatisticas = gerenciador.obterEstatisticas();
+            totalSolicitacoes.textContent = estatisticas.total;
+            solicitacoesPendentes.textContent = estatisticas.pendentes;
+            solicitacoesAprovadas.textContent = estatisticas.aprovadas;
+            solicitacoesEntregues.textContent = estatisticas.entregues;
+        }
+
+        // Função para atualizar o status de uma solicitação
+        function atualizarStatusSolicitacao(id, novoStatus) {
+            if (gerenciador.atualizarStatus(id, novoStatus)) {
+                atualizarTabelaAdm();
+                atualizarEstatisticas();
+            } else {
+                alert('Erro ao atualizar status da solicitação.');
+            }
+        }
+
+        // Função para remover uma solicitação
+        function removerSolicitacao(id) {
+            if (confirm('Tem certeza que deseja excluir esta solicitação?')) {
+                if (gerenciador.removerSolicitacao(id)) {
+                    atualizarTabelaAdm();
+                    atualizarEstatisticas();
+                } else {
+                    alert('Erro ao excluir solicitação.');
+                }
+            }
+        }
+
+        // Formatar data e hora para exibição
+        function formatarDataHora(dataHoraString) {
+            const data = new Date(dataHoraString);
+            return data.toLocaleString('pt-BR');
+        }
+
+        // Inicializar a aplicação
+        function inicializar() {
+            // Definir data/hora atual como padrão no formulário
+            document.getElementById('dataHora').value = new Date().toISOString().slice(0, 16);
+            
+            // Definir data atual como padrão no filtro
+            document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Iniciar a aplicação quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+</body>
+</html>
