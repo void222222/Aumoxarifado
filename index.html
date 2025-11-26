@@ -254,6 +254,60 @@
             font-size: 14px;
         }
         
+        /* Tela de login ADM */
+        .login-adm-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            padding: 20px;
+        }
+        
+        .login-adm-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-adm-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        
+        .password-input-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+        }
+        
+        .back-btn {
+            background-color: #95a5a6;
+            margin-top: 10px;
+        }
+        
+        .error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        
         /* Responsividade */
         @media (max-width: 768px) {
             #adm table {
@@ -352,11 +406,41 @@
                         <small>Otimizado para tablet</small>
                     </button>
                     
-                    <button class="login-btn adm" data-mode="adm">
+                    <button class="login-btn adm" data-mode="adm-login">
                         <h3>Administração</h3>
                         <p>Acesso para gerenciar solicitações</p>
-                        <small>Otimizado para PC</small>
+                        <small>Otimizado para PC - Requer senha</small>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tela de Login ADM -->
+    <div id="adm-login" class="mode-content">
+        <div class="container">
+            <header>
+                <h1>Almoxarifado - Administração</h1>
+                <p>Acesso Restrito</p>
+            </header>
+            
+            <div class="login-adm-container">
+                <div class="login-adm-form">
+                    <h2>Login Administrativo</h2>
+                    <form id="loginAdmForm">
+                        <div class="form-group">
+                            <label for="senhaAdm">Senha:</label>
+                            <div class="password-input-container">
+                                <input type="password" id="senhaAdm" required placeholder="Digite a senha administrativa">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="error-message" id="loginError"></div>
+                        
+                        <button type="submit" class="btn-success" style="width: 100%;">Acessar</button>
+                        <button type="button" class="back-btn" style="width: 100%;" onclick="voltarParaLogin()">Voltar</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -370,7 +454,7 @@
                 <p>Solicitação de Materiais</p>
             </header>
             
-            <button class="logout-btn">Sair</button>
+            <button class="logout-btn" onclick="voltarParaLogin()">Sair</button>
             
             <div class="card">
                 <h2>Solicitar Material</h2>
@@ -414,12 +498,13 @@
                 <p>Gestão de Solicitações de Materiais</p>
             </header>
             
-            <button class="logout-btn">Sair</button>
+            <button class="logout-btn" onclick="voltarParaLogin()">Sair</button>
             
             <div class="card">
                 <div class="adm-header">
                     <h2>Painel de Administração</h2>
                     <div>
+                        <button id="alterarSenhaBtn" class="btn-warning">Alterar Senha</button>
                         <button id="exportarBtn" class="btn-success">Exportar Dados</button>
                     </div>
                 </div>
@@ -483,6 +568,32 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal para alterar senha -->
+    <div id="modalSenha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px;">
+            <h2 style="margin-bottom: 20px; text-align: center;">Alterar Senha</h2>
+            <form id="formAlterarSenha">
+                <div class="form-group">
+                    <label for="senhaAtual">Senha Atual:</label>
+                    <input type="password" id="senhaAtual" required>
+                </div>
+                <div class="form-group">
+                    <label for="novaSenha">Nova Senha:</label>
+                    <input type="password" id="novaSenha" required minlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="confirmarSenha">Confirmar Nova Senha:</label>
+                    <input type="password" id="confirmarSenha" required minlength="4">
+                </div>
+                <div class="error-message" id="senhaError"></div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-success" style="flex: 1;">Alterar Senha</button>
+                    <button type="button" class="btn-danger" style="flex: 1;" onclick="fecharModalSenha()">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -629,15 +740,52 @@
             }
         }
 
-        // Instância do gerenciador
+        // Gerenciador de senhas
+        class GerenciadorSenhas {
+            constructor() {
+                this.senhaPadrao = 'admin123'; // Senha padrão inicial
+            }
+            
+            // Obtém a senha salva ou retorna a padrão
+            obterSenha() {
+                return localStorage.getItem('senhaAdmAlmoxarifado') || this.senhaPadrao;
+            }
+            
+            // Salva uma nova senha
+            salvarSenha(novaSenha) {
+                localStorage.setItem('senhaAdmAlmoxarifado', novaSenha);
+            }
+            
+            // Verifica se a senha está correta
+            verificarSenha(senha) {
+                return senha === this.obterSenha();
+            }
+            
+            // Altera a senha
+            alterarSenha(senhaAtual, novaSenha) {
+                if (!this.verificarSenha(senhaAtual)) {
+                    return { sucesso: false, erro: 'Senha atual incorreta' };
+                }
+                
+                if (novaSenha.length < 4) {
+                    return { sucesso: false, erro: 'A nova senha deve ter pelo menos 4 caracteres' };
+                }
+                
+                this.salvarSenha(novaSenha);
+                return { sucesso: true };
+            }
+        }
+
+        // Instâncias dos gerenciadores
         const gerenciador = new GerenciadorSolicitacoes();
+        const gerenciadorSenhas = new GerenciadorSenhas();
 
         // Elementos DOM
         const loginScreen = document.getElementById('login');
+        const admLoginScreen = document.getElementById('adm-login');
         const modoProducao = document.getElementById('producao');
         const modoAdm = document.getElementById('adm');
         const botoesLogin = document.querySelectorAll('.login-btn');
-        const botoesLogout = document.querySelectorAll('.logout-btn');
         const formularioSolicitacao = document.getElementById('solicitacaoForm');
         const listaSolicitacoesProducao = document.getElementById('listaSolicitacoesProducao');
         const tabelaSolicitacoes = document.getElementById('tabelaSolicitacoes');
@@ -645,10 +793,16 @@
         const filtroStatus = document.getElementById('filtroStatus');
         const filtroData = document.getElementById('filtroData');
         const exportarBtn = document.getElementById('exportarBtn');
+        const alterarSenhaBtn = document.getElementById('alterarSenhaBtn');
         const totalSolicitacoes = document.getElementById('totalSolicitacoes');
         const solicitacoesPendentes = document.getElementById('solicitacoesPendentes');
         const solicitacoesAprovadas = document.getElementById('solicitacoesAprovadas');
         const solicitacoesEntregues = document.getElementById('solicitacoesEntregues');
+        const loginAdmForm = document.getElementById('loginAdmForm');
+        const loginError = document.getElementById('loginError');
+        const modalSenha = document.getElementById('modalSenha');
+        const formAlterarSenha = document.getElementById('formAlterarSenha');
+        const senhaError = document.getElementById('senhaError');
 
         // Navegação entre telas
         botoesLogin.forEach(botao => {
@@ -662,22 +816,91 @@
                 if (modo === 'producao') {
                     modoProducao.classList.add('active');
                     atualizarListaProducao();
-                } else {
-                    modoAdm.classList.add('active');
-                    atualizarTabelaAdm();
-                    atualizarEstatisticas();
+                } else if (modo === 'adm-login') {
+                    admLoginScreen.classList.add('active');
+                    document.getElementById('senhaAdm').value = '';
+                    loginError.textContent = '';
                 }
             });
         });
 
-        // Botões de logout
-        botoesLogout.forEach(botao => {
-            botao.addEventListener('click', () => {
-                // Voltar para tela de login
-                modoProducao.classList.remove('active');
-                modoAdm.classList.remove('active');
-                loginScreen.classList.add('active');
-            });
+        // Login ADM
+        loginAdmForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const senha = document.getElementById('senhaAdm').value;
+            
+            if (gerenciadorSenhas.verificarSenha(senha)) {
+                // Login bem-sucedido
+                admLoginScreen.classList.remove('active');
+                modoAdm.classList.add('active');
+                atualizarTabelaAdm();
+                atualizarEstatisticas();
+            } else {
+                // Senha incorreta
+                loginError.textContent = 'Senha incorreta. Tente novamente.';
+                document.getElementById('senhaAdm').value = '';
+                document.getElementById('senhaAdm').focus();
+            }
+        });
+
+        // Voltar para tela de login
+        function voltarParaLogin() {
+            modoProducao.classList.remove('active');
+            modoAdm.classList.remove('active');
+            admLoginScreen.classList.remove('active');
+            loginScreen.classList.add('active');
+        }
+
+        // Alternar visibilidade da senha
+        function togglePasswordVisibility() {
+            const senhaInput = document.getElementById('senhaAdm');
+            const toggleBtn = document.querySelector('.toggle-password');
+            
+            if (senhaInput.type === 'password') {
+                senhaInput.type = 'text';
+                toggleBtn.textContent = '🔒';
+            } else {
+                senhaInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // Abrir modal para alterar senha
+        alterarSenhaBtn.addEventListener('click', () => {
+            modalSenha.style.display = 'flex';
+            document.getElementById('senhaAtual').value = '';
+            document.getElementById('novaSenha').value = '';
+            document.getElementById('confirmarSenha').value = '';
+            senhaError.textContent = '';
+        });
+
+        // Fechar modal de senha
+        function fecharModalSenha() {
+            modalSenha.style.display = 'none';
+        }
+
+        // Alterar senha
+        formAlterarSenha.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            
+            if (novaSenha !== confirmarSenha) {
+                senhaError.textContent = 'As novas senhas não coincidem.';
+                return;
+            }
+            
+            const resultado = gerenciadorSenhas.alterarSenha(senhaAtual, novaSenha);
+            
+            if (resultado.sucesso) {
+                alert('Senha alterada com sucesso!');
+                fecharModalSenha();
+            } else {
+                senhaError.textContent = resultado.erro;
+            }
         });
 
         // Enviar nova solicitação
